@@ -2,25 +2,23 @@ package main
 
 import (
 	"fmt"
-//"strconv"
+    "strconv"
 	"os"
 	"os/exec"
 	"errors"
-		"github.com/davecgh/go-spew/spew"
+	//"github.com/davecgh/go-spew/spew"
 	"strings"
+	"regexp"
 
 
 )
 const (
-	DEBUG  = 1		// enable debug mode	
+	DEBUG  = 0		// enable debug mode	
 )
 
 type report struct {
 	latency string
-	maxSpeed string 
-	minSpeed string
-	avgSpeed string
-	//location string 
+	speed string 
 }
 
 func main() {
@@ -37,25 +35,33 @@ func main() {
 	}
 	var allSite []string = strings.Split(curlOutput, "\n")
 
-	/* Test the speed */
-	runSpeedTest(allSite)
+	/* Test the speed and generate the report */
+	testingReport := runSpeedTest(allSite)
 
-
-
-
-
-
+	/* Generate the report */
+	generateReport(testingReport)
 }
 
-func runSpeedTest(allSite []string) {
+func generateReport(rawReport map[string]report){
 
-	printINFO("Start the speed test...")
-     
-	//fullReport := make(map[string]report)	// create a hash for hold the full report
+	cyan := "\033[38;5;14m"
+	normal := "\033[39;49m"
+
+	/* generate header */
+	fmt.Printf("%s\n============================================== Vultr site speed test report ==============================================%s\n\n", cyan,normal)
+	for site, report := range rawReport {
+		fmt.Printf("%sHost: [%s]  \tlatency: [%s]\t  speed: [%s] %s\n", cyan,site,report.latency,report.speed,normal)
+	}
+	fmt.Printf("\n%s======================================================== End  ===========================================================%s\n", cyan,normal)
+}
+
+func runSpeedTest(allSite []string)  map[string]report{
+    
+    testDuration := 5 					// how long will be used for download the file 
+	fullReport := make(map[string]report)	// create a hash for hold the full report
 	var siteReport report
 
-
-	fmt.Println(len(allSite))
+	printINFO("Start the speed test...")
 	for siteID := 0; siteID < len(allSite); {
 
 		host := strings.Split(allSite[siteID], "/")[2]
@@ -76,50 +82,46 @@ func runSpeedTest(allSite []string) {
 			latencyValue = "Unknown"
 		}
 		
-		siteReport.latency = latencyValue;
+		siteReport.latency = latencyValue + " ms"; 
 
 		/* --------------- download test ---------------*/
 		
-
-
+		// download a 100MB file for 10 seconds
+		printINFO("Testing download speed from url [" +allSite[siteID]+ "]")
+		var fileSize = 100 * 1024 * 1024			// 100 MB
+		var downloadedSize int
+		getFileCMD := "curl " +allSite[siteID]+ " -o /dev/null -m " + strconv.Itoa(testDuration) +" 2>&1 | grep 'Operation timed out'"
+		downloadSummary := runCommand(getFileCMD)
 		
+		if len(downloadSummary) == 0 {				// download finished within 10 sec
+			siteReport.speed = string(fileSize/testDuration/1024) + " KB/s"
+		}else{
+			downloadedSizeString := strings.Split(downloadSummary, " ")[9]
+			
+			// check if the output is number
+			match, _ := regexp.MatchString("([0-9]+)", downloadedSizeString)
+			if match {
+				downloadedSize, _ = strconv.Atoi(downloadedSizeString)
+				siteReport.speed = strconv.Itoa(downloadedSize/testDuration/1024) + " KB/s"
+			} else {
+				siteReport.speed = "Unknown"
+			}
+		}
+		printDEBUG("Download speed is ["+ siteReport.speed +"]")
+		fullReport[allSite[siteID]] = siteReport
 
-
-
-
-
-
-		/* -- example --
-		//var testReport = report{latency = 1;}
-		siteReport.latency = 100;
-		siteReport.maxSpeed = 500;
-		siteReport.minSpeed = 100;
-		siteReport.avgSpeed = 300;
-
-		fullReprt[allSite[siteID]] = siteReport
-		
-		spew.Dump(fullReprt)
-		*/
-
-
-
-
-		spew.Dump(siteReport)
-		panic("test")
+		//spew.Dump(siteReport)
+		//panic("test")
 
 		siteID++
-
-
-
-
-
 	}
+	//spew.Dump(fullReport)
+	return fullReport
 }
 
 func runCommand(cmd string) (output string){
         
 	printDEBUG("Execute command ["+cmd+"]...")
-
 	out, err := exec.Command("bash","-c",cmd).Output()
 	outputFinal := strings.TrimSpace(string(out))		// remove the new line at the end
 	printDEBUG("The output is: ["+ string(outputFinal)+"]")
@@ -128,7 +130,6 @@ func runCommand(cmd string) (output string){
 		printERROR(err, "Failed to exeute command ["+cmd+"]")
 	}
 	return string(outputFinal)
-
 }
 
 func createWorkFolder(folder string) {
@@ -141,8 +142,6 @@ func createWorkFolder(folder string) {
 
 	printINFO("workFolder "+folder+" created")
 	defer os.RemoveAll(folder)   // clean the work folder if abnormally exit
-
-	//return folder
 }
 
 func printColor(logLevel string, message string){
@@ -176,11 +175,9 @@ func printColor(logLevel string, message string){
 }
 
 func printDEBUG(message string){
-
 	if DEBUG == 1 {
 		printColor("DEBUG", message + "\n")
 	}
-	
 }
 func printWARN(message string) {
 	printColor("WARN", message + "\n")
