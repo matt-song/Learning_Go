@@ -41,8 +41,8 @@ func crawlWebsite(url string) {
 		fmt.Println(selection.Find("div.sqekv3-2").Text()) // category
 		fmt.Println(selection.Find("div.sqekv3-5").Text()) // title
 		fmt.Println(selection.Find("div.sqekv3-6").Text()) // Date
-		a := selection.Find("a")
-		qHref, _ := a.Attr("href")
-		fmt.Println(qHref) // the link of the doc
+		a := selection.Find("div.sqekv3-5").Find("a")      // find the href link in the div.sqekv3-6
+		targetURL, _ := a.Attr("href")
+		fmt.Println(targetURL) // the link of the doc
 	})
 }
