@@ -8,23 +8,23 @@ import (
 	"time"
 )
 
-var (
-	enableDEBUG = true
+const (
+	enableDEBUG = 1
 )
 
 func main() {
 
 	cmdGood := "uptime"
-	runCommand(cmdGood, false)
+	runCommand(cmdGood, 0)
 
 	cmdBad := "touch /1.txt"
-	runCommand(cmdBad, false)
+	runCommand(cmdBad, 0)
 
 	cmdFATAL := "mv /tmp/1.txt /tmp/2.txt"
-	runCommand(cmdFATAL, true)
+	runCommand(cmdFATAL, 1)
 }
 
-func runCommand(cmd string, errorOut bool) (output string) {
+func runCommand(cmd string, errorOut int) (output string) {
 
 	plog("DEBUG", "Execute command ["+cmd+"]...")
 
@@ -33,7 +33,7 @@ func runCommand(cmd string, errorOut bool) (output string) {
 	plog("DEBUG", "The output is: ["+string(outputFinal)+"]")
 
 	if err != nil {
-		if errorOut == false {
+		if errorOut == 0 {
 			plog("ERROR", "Failed to exeute command ["+cmd+"]")
 			plog("ERROR", "The error message is ["+err.Error()+"]")
 		} else {
@@ -56,7 +56,7 @@ func plog(logLevel string, message string) {
 	normal := "\033[39;49m"
 
 	var colorCode string
-	var errorOut = false
+	var errorOut = 0
 
 	switch logLevel {
 	case "INFO":
@@ -67,9 +67,9 @@ func plog(logLevel string, message string) {
 		colorCode = lightRed
 	case "FATAL":
 		colorCode = red
-		errorOut = true
+		errorOut = 1
 	case "DEBUG":
-		if enableDEBUG == true {
+		if enableDEBUG == 1 {
 			colorCode = cyan
 		} else {
 			return
@@ -79,7 +79,7 @@ func plog(logLevel string, message string) {
 	}
 	curTime := time.Now()
 	fmt.Printf("%s"+curTime.Format("2006-01-02 15:04:05")+" [%s] %s\n", colorCode, logLevel, message)
-	if errorOut == true {
+	if errorOut == 1 {
 		os.Exit(1)
 	}
 }

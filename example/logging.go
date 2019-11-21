@@ -3,46 +3,12 @@ package main
 import (
 	"fmt"
 	"os"
-	"os/exec"
-	"strings"
 	"time"
 )
 
-var (
+const (
 	enableDEBUG = true
 )
-
-func main() {
-
-	cmdGood := "uptime"
-	runCommand(cmdGood, false)
-
-	cmdBad := "touch /1.txt"
-	runCommand(cmdBad, false)
-
-	cmdFATAL := "mv /tmp/1.txt /tmp/2.txt"
-	runCommand(cmdFATAL, true)
-}
-
-func runCommand(cmd string, errorOut bool) (output string) {
-
-	plog("DEBUG", "Execute command ["+cmd+"]...")
-
-	out, err := exec.Command(cmd).Output()
-	outputFinal := strings.TrimSpace(string(out)) // remove the new line at the end
-	plog("DEBUG", "The output is: ["+string(outputFinal)+"]")
-
-	if err != nil {
-		if errorOut == false {
-			plog("ERROR", "Failed to exeute command ["+cmd+"]")
-			plog("ERROR", "The error message is ["+err.Error()+"]")
-		} else {
-			plog("FATAL", "Failed to exeute command ["+cmd+"]")
-			plog("FATAL", "The error message is ["+err.Error()+"]")
-		}
-	}
-	return string(outputFinal)
-}
 
 func plog(logLevel string, message string) {
 
@@ -82,4 +48,15 @@ func plog(logLevel string, message string) {
 	if errorOut == true {
 		os.Exit(1)
 	}
+}
+
+func main() {
+
+	var msg = "This is the messgae"
+	plog("INFO", msg)
+	plog("DEBUG", msg)
+	plog("WARN", msg)
+	plog("ERROR", msg)
+	plog("UNKNOWN", msg)
+	plog("FATAL", msg)
 }

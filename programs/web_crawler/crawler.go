@@ -38,6 +38,7 @@ func crawlWebsite(url string) {
 	// div.sqekv3-3 is the div for each doc
 	doc.Find("div.sqekv3-3").Each(func(i int, selection *goquery.Selection) {
 
+		log.Print(i)
 		fmt.Println(selection.Find("div.sqekv3-2").Text()) // category
 		fmt.Println(selection.Find("div.sqekv3-5").Text()) // title
 		fmt.Println(selection.Find("div.sqekv3-6").Text()) // Date
