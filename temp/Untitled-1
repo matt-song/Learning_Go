@@ -1,0 +1,11 @@
+func connectDB() {
+	DBconnStr := "host=" + dbHost + " port=" + dbPort + " user=" + dbUser + " dbname=" + dbName + " password=" + dbPassword + " sslmode=disable"
+	plog("DEBUG", "The DB conn string is: "+DBconnStr)
+	plog("INFO", "Connecting to DB ["+dbName+"]...")
+
+	db, err := sql.Open("postgres", DBconnStr)
+	if err != nil {
+		log.Fatal(err)
+	}
+	fmt.Println(reflect.TypeOf(tst)) 
+}
